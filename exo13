@@ -1,0 +1,59 @@
+import csv
+import requests
+
+# IP du serveur Ollama 
+API_URL = "http://10.229.43.154:11434/api/generate"
+
+
+def analyse_message(texte):
+    prompt = f"""
+Analyse le message et réponds seulement par :
+- Oui si c'est une demande nécessitant une réponse
+- Non sinon
+
+Message : {texte}
+"""
+
+    r = requests.post(API_URL, json={
+        "model": "mistral",
+        "prompt": prompt,
+        "stream": False
+    })
+
+    # récupérer la réponse de l'IA
+    reponse = r.json()["response"].strip()
+
+# Pour que le programme transforme toute les réponse de l'ia soit par oui soit par non
+    #if "oui" in reponse.lower():
+    #    reponse = "Oui"
+    #elif "non" in reponse.lower():
+    #    reponse = "Non"
+
+    return reponse
+
+
+score = 0
+total = 0
+
+# Lecture du fichier CSV
+with open("emails.csv", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+
+    for row in reader:
+        message = row["email_text"]
+        attendu = row["label_attendu"]
+
+        resultat = analyse_message(message)
+
+        print("Message :", message)
+        print("Réponse IA :", resultat)
+        print("Attendu :", attendu)
+
+        if resultat == attendu:
+            score += 1
+
+        total += 1
+
+        print("-" * 40)
+
+print("Score final :", score, "/", total)
